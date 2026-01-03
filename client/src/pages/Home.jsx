@@ -10,10 +10,9 @@ import {
 } from '@heroicons/react/24/outline'
 import { StarIcon } from '@heroicons/react/24/solid'
 import api from '../services/api'
-// Temporarily disable SEO to isolate the issue
-// import SEOHead from '../components/SEO/SEOHead'
-// import useSEO from '../hooks/useSEO'
-// import useSettingsStore from '../stores/settingsStore'
+import SEOHead from '../components/SEO/SEOHead'
+import useSEO from '../hooks/useSEO'
+import useSettingsStore from '../stores/settingsStore'
 
 const Home = () => {
   const [featuredProducts, setFeaturedProducts] = useState([])
@@ -23,27 +22,24 @@ const Home = () => {
   const fetchingRef = useRef(false)
   const mountedRef = useRef(true)
 
-  // const { generateSEO, trackPageView } = useSEO()
-  // Temporarily disable settings store
-  // const { 
-  //   getHeroTitle, 
-  //   getHeroSubtitle, 
-  //   fetchSettings
-  // } = useSettingsStore()
+  const { generateSEO, trackPageView } = useSEO()
+  const { 
+    getHeroTitle, 
+    getHeroSubtitle, 
+    fetchSettings
+  } = useSettingsStore()
 
-  // const seoData = generateSEO('home')
+  const seoData = generateSEO('home')
 
-  // More robust fetch function that handles StrictMode
+  // Optimized fetch function for production
   const fetchHomeData = useCallback(async () => {
     // Prevent multiple simultaneous requests
     if (fetchingRef.current) {
-      console.log('Fetch already in progress, skipping...')
       return
     }
 
     // Double-check component is still mounted
     if (!mountedRef.current) {
-      console.log('Component not mounted, skipping fetch')
       return
     }
 
@@ -52,42 +48,23 @@ const Home = () => {
       setIsLoading(true)
       setError(null)
 
-      console.log('🚀 Starting to fetch home data...')
-      console.log('Mount status:', mountedRef.current)
-
-      // Fetch products and categories directly (skip settings for now)
-      console.log('📦 Fetching products...')
+      // Fetch products and categories
       const productsRes = await api.get('/products?featured=true&limit=8')
-      console.log('✅ Products response:', productsRes.data)
 
       // Check if still mounted after first API call
       if (!mountedRef.current) {
-        console.log('⚠️ Component unmounted during products fetch, aborting')
         return
       }
 
-      console.log('📂 Fetching categories...')
       const categoriesRes = await api.get('/categories?featured=true&limit=6')
-      console.log('✅ Categories response:', categoriesRes.data)
       
       // Final check before setting state
       if (mountedRef.current) {
-        console.log('🔄 Setting state with data...')
         setFeaturedProducts(productsRes.data.data || [])
         setCategories(categoriesRes.data.data || [])
-        console.log('✅ Data set successfully')
-        console.log('Products count:', productsRes.data.data?.length || 0)
-        console.log('Categories count:', categoriesRes.data.data?.length || 0)
-      } else {
-        console.log('⚠️ Component unmounted before setting state, skipping state update')
       }
     } catch (error) {
-      console.error('❌ Failed to fetch home data:', error)
-      console.error('Error details:', {
-        message: error.message,
-        status: error.response?.status,
-        data: error.response?.data
-      })
+      console.error('Failed to fetch home data:', error)
       
       if (mountedRef.current) {
         if (error.response?.status === 429) {
@@ -98,16 +75,14 @@ const Home = () => {
       }
     } finally {
       if (mountedRef.current) {
-        console.log('🏁 Setting loading to false')
         setIsLoading(false)
       }
       fetchingRef.current = false
     }
-  }, []) // Remove all dependencies to prevent loops
+  }, [])
 
   useEffect(() => {
-    console.log('🎯 Home component mounted, calling fetchHomeData')
-    mountedRef.current = true // Ensure mounted flag is set
+    mountedRef.current = true
     
     // Add a small delay to ensure component is fully mounted
     const timer = setTimeout(() => {
@@ -118,11 +93,10 @@ const Home = () => {
     
     // Cleanup function
     return () => {
-      console.log('🧹 Home component unmounting')
       clearTimeout(timer)
       mountedRef.current = false
     }
-  }, [fetchHomeData]) // Add fetchHomeData back since it has no dependencies now
+  }, [fetchHomeData])
 
   // Separate cleanup effect
   useEffect(() => {
@@ -157,7 +131,7 @@ const Home = () => {
 
   return (
     <>
-      {/* <SEOHead {...seoData} /> */}
+      <SEOHead {...seoData} />
       <div className="min-h-screen">
         {/* Error Message */}
         {error && (
@@ -197,7 +171,7 @@ const Home = () => {
               transition={{ duration: 0.6 }}
               className="text-4xl md:text-6xl font-bold mb-6"
             >
-              {'Discover Amazing Products'}
+              {getHeroTitle() || 'Discover Amazing Products'}
             </motion.h1>
             <motion.p
               initial={{ opacity: 0, y: 20 }}
@@ -205,24 +179,8 @@ const Home = () => {
               transition={{ duration: 0.6, delay: 0.2 }}
               className="text-xl md:text-2xl mb-8 text-gray-100"
             >
-              {'Shop the latest trends with unbeatable prices and quality'}
+              {getHeroSubtitle() || 'Shop the latest trends with unbeatable prices and quality'}
             </motion.p>
-            
-            {/* Debug information - Enhanced */}
-            <div className="text-sm text-gray-200 mb-4 bg-black bg-opacity-50 p-4 rounded">
-              <p><strong>Loading:</strong> {isLoading ? 'Yes' : 'No'}</p>
-              <p><strong>Products:</strong> {featuredProducts.length}</p>
-              <p><strong>Categories:</strong> {categories.length}</p>
-              <p><strong>Fetch in progress:</strong> {fetchingRef.current ? 'Yes' : 'No'}</p>
-              <p><strong>Component mounted:</strong> {mountedRef.current ? 'Yes' : 'No'}</p>
-              {error && <p className="text-red-300"><strong>Error:</strong> {error}</p>}
-              {featuredProducts.length > 0 && (
-                <p><strong>First product:</strong> {featuredProducts[0].name}</p>
-              )}
-              {categories.length > 0 && (
-                <p><strong>First category:</strong> {categories[0].name}</p>
-              )}
-            </div>
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}

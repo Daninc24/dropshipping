@@ -19,8 +19,7 @@ const queryClient = new QueryClient({
 })
 
 ReactDOM.createRoot(document.getElementById('root')).render(
-  // Temporarily disable StrictMode to fix data loading issue
-  // <React.StrictMode>
+  <React.StrictMode>
     <HelmetProvider>
       <QueryClientProvider client={queryClient}>
         <BrowserRouter>
@@ -52,5 +51,5 @@ ReactDOM.createRoot(document.getElementById('root')).render(
         </BrowserRouter>
       </QueryClientProvider>
     </HelmetProvider>
-  // </React.StrictMode>,
+  </React.StrictMode>,
 )
